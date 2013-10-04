@@ -3,25 +3,169 @@
   <head>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <title>Twittler Project</title>
+    <style>
+      body {
+        background-color: #009933;
+      }
+      #wrap {
+        width:100%;
+        margin:0 auto;
+      }
+      #header {
+        text-align: center;
+      }
+      #all_tweets {
+        background:#9c9;
+        float: left;
+        width: 49%;
+        padding-left: 5px;
+      }
+      #col1 {
+        text-align: center;
+      }
+      #user_tweets {
+        background:#c9c;
+        float: right;
+        width: 50%;
+        padding-left: 5px;
+      }
+    </style>
   </head>
   <body>
+
     <script>
 
       $(document).ready(function(){
-        var $body = $('body');
-        $body.html('');
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+        var get_tweets = function (object_info, column_info) {
+          var tweet = object_info;
+          var $tweet = $('<h4></h4>'); //set up h4's for tweets
+          $tweet.text('@' + tweet.user + ': ' + tweet.message); //get username and message from tweet object
+          var $date_tweet = $('<p></p>'); //set up paragraphs for Date
+          $date_tweet.text(tweet.created_at); //get Date from tweet object
+          $date_tweet.insertAfter(column_info); // insert the new date after the "Get More Tweets" button
+          $tweet.insertAfter(column_info); // insert the new tweet after the "Get More Tweets" button
+        };
+
+        var set_ids = function (num, total, columnInformation) {
+          //add ID's to each tweet and add ID's to each date (divs contain tweets; paragraphs contain dates)
+          //The lowest tweet on the page is the earliest tweet (therefore has ID "tweet_0").
+          var id_name = "tweet_";
+          var id_date = "date_";
+          if (columnInformation == "user_tweets") {
+            id_name = "personal_tweet_";
+            id_date = "personal_date_"
+            }
+          var select_column = document.getElementById(columnInformation);
+          var h4_id = select_column.getElementsByTagName('h4');
+          var p_id = select_column.getElementsByTagName('p');    
+          for (var i = 0; i<num; i++) {
+            h4_id[i].id = id_name + (total - (i + 1));
+            p_id[i].id = id_date + (total - (i + 1));
+          }
+        };
+
+        var set_children = function (num, begin, columnInformation) {
+          //move dates to be a child of each tweet
+          var tweet_id = "#tweet_";
+          var date_id = "#date_";
+          if (columnInformation == "user_tweets") {
+            tweet_id = "#personal_tweet_";
+            date_id = "#personal_date_"
+            }
+          for (var i = begin; i<num; i++) {
+            var temp_tweet_id = tweet_id + i;
+            var temp_date_id = date_id + i;
+            $(temp_tweet_id).append($(temp_date_id));
+          }
+        };
+
+        var get_personal_tweets = function (number, user_array) {
+          $('#user_tweets').find('h4').remove();
+          $('#user_tweets').find('p').remove();
+          for (var i = 0; i < number; i++) {
+            get_tweets(user_array[i], "#douglas");
+          }
+          set_ids(number, number, "user_tweets");
+          set_children(number, 0, "user_tweets");
+        };
+
+        //get original tweets
+        for (var i = 0; i<streams.home.length; i++) {
+          get_tweets(streams.home[i], "#tweets");
         }
+
+        //set ids and put them in the DOM
+        var new_index = streams.home.length;
+        set_ids(new_index, new_index, "all_tweets");
+        set_children(new_index, 0, "all_tweets");
+
+        var update_check = streams.home.length; //The variable 'update_check' will be used if the "Get More Tweets" button is pressed.
+        
+        //if button is pressed then get more tweets. After 20 tweets, the oldest tweets are removed.
+        $('#tweets').on('click', function () {
+          if (streams.home.length > update_check) { //checks if there are any more tweets
+            update_check = streams.home.length; 
+            for (var i = new_index; i < update_check; i++) {
+              get_tweets(streams.home[i], "#tweets");
+            }
+            set_ids((update_check - new_index),update_check, "all_tweets");
+            set_children(update_check, new_index, "all-tweets");
+            new_index = update_check;
+          }
+          //remove oldest tweets so only most recent 20 tweets are showing
+          var columnOneVariable = document.getElementById("all_tweets");
+          if (columnOneVariable.getElementsByTagName('h4').length > 20) {
+            var h4_length = columnOneVariable.getElementsByTagName('h4').length;
+            while (h4_length > 20) {
+              $("#all_tweets").find("h4").last().remove();
+              h4_length --;
+            }
+          }
+        });
+
+        // This allows the user to click on a username to see that user's timeline.
+        $('#shawn').on('click', function() {
+          var num_of_tweets = streams.users.shawndrost.length;
+          get_personal_tweets(num_of_tweets, streams.users.shawndrost)
+        });
+        
+        // This allows the user to click on a username to see that user's timeline.
+        $('#sharks').on('click', function() {
+          var num_of_tweets = streams.users.sharksforcheap.length;
+          get_personal_tweets(num_of_tweets, streams.users.sharksforcheap)
+        });
+
+        // This allows the user to click on a username to see that user's timeline.
+        $('#mracus').on('click', function() {
+          var num_of_tweets = streams.users.mracus.length;
+          get_personal_tweets(num_of_tweets, streams.users.mracus)
+        });
+
+        // This allows the user to click on a username to see that user's timeline.
+        $('#douglas').on('click', function() {
+          var num_of_tweets = streams.users.douglascalhoun.length;
+          get_personal_tweets(num_of_tweets, streams.users.douglascalhoun)
+        });
 
       });
 
     </script>
+    <div id="wrap">
+      <div id="header"><h1>Twittler!</h1></div>
+      <div id="all_tweets">
+        <h2 id="col1">Most Recent Tweets</h2>
+        <button id="tweets">Get More Tweets!</button>
+      </div>
+      <div id="user_tweets">
+        <h2 id="col2">User Tweets</h2>
+        <button id="shawn">Get shawndrost Tweets!</button>
+        <button id="sharks">Get sharksforcheap Tweets!</button>
+        <button id="mracus">Get mracus Tweets!</button>
+        <button id="douglas">Get douglascalhoun Tweets!</button>
+      </div>
+    </div>
+
   </body>
 </html>
